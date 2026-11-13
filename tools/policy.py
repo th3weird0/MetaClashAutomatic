@@ -52,8 +52,26 @@ def members(group,nodes,providers):
     if excluded:values={n for n in values if not re.search(excluded,n)}
     return values
 
+def validate_ruleset_references(data):
+    """DNS policies also resolve named rule providers during core parsing."""
+    providers=set(data.get('rule-providers',{}))
+    rules=list(data.get('rules',[]))
+    for rows in data.get('sub-rules',{}).values():rules.extend(rows)
+    for rule in rules:
+        for ref in re.finditer(r'(?:^|[,(])RULE-SET,([^,]+)',rule):
+            name=ref.group(1)
+            if name not in providers and (ref.start()==0 or name.rstrip(')') not in providers):
+                raise ValueError('Routing rule references an unavailable rule provider')
+    for field in ('nameserver-policy','proxy-server-nameserver-policy'):
+        for key in data.get('dns',{}).get(field,{}):
+            if str(key).startswith('rule-set:'):
+                names=str(key)[len('rule-set:'):].split(',')
+                if any(name not in providers for name in names):
+                    raise ValueError('DNS '+field+' references an unavailable rule provider')
+
 def prepare(data,home,first_activation=False):
     result=copy.deepcopy(data)
+    validate_ruleset_references(result)
     nodes,providers=inventory(result,home)
     groups={g['name']:g for g in result.get('proxy-groups',[])}
     if len(groups)!=len(result.get('proxy-groups',[])):raise ValueError('Duplicate group names')

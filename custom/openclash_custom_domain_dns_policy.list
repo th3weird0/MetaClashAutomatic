@@ -1,7 +1,6 @@
-# 文件作用：按规则集与域名分配国内或境外 DNS，供 Nameserver-Policy 加载。
-"rule-set:claude,ai_suite,AppleAI_Domain,google_gemini,google,google_drive,google_search,YouTube,TikTok,OpenAi,AI,Telegram,Netflix,ProxyMedia,ProxyGFWlist": ["https://1.1.1.1/dns-query", "https://8.8.8.8/dns-query"]
+# 文件作用：按 GEO 分类与显式域名分配 DNS，不依赖转换器生成的规则源名称。
+# 不引用旧模块的 rule-set 名称，避免停用模块后 DNS 策略出现悬空引用。
 "+.cn": ["https://dns.alidns.com/dns-query", "tls://dot.pub"]
-"rule-set:bytedance,wechat,tencent,xiaohongshu,网易云音乐,download_cdn_cn,china_domain,ChinaDomain,ChinaMedia": ["https://dns.alidns.com/dns-query", "https://doh.pub/dns-query", "tls://dot.pub"]
 "geosite:cn": ["https://dns.alidns.com/dns-query", "https://doh.pub/dns-query", "tls://dot.pub"]
 "geosite:geolocation-!cn": ["https://1.1.1.1/dns-query", "https://8.8.8.8/dns-query"]
 "+.chatgpt.com": ["https://1.1.1.1/dns-query", "https://8.8.8.8/dns-query"]

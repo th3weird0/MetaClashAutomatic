@@ -18,9 +18,9 @@ python tools/run-checks.py
 
 该命令以前台方式运行真实转换器，使用合成订阅，下载当前引用的规则，交给核验内核解析，再检查关键域名分流、节点筛选、锁定/故障切换、保存选择状态、零 Netflix 候选拒绝替换及空组拒绝连接，最后扫描工作目录与完整可达 Git 历史。输出在 `.local/validation/`；失败不会产生“本轮全部通过”凭证。
 
-还会将 TikTok、clash-fullauto、WiFi Calling 与两个保护模块合并到生成配置，检查旧规则出口、规则源、同名组与真实候选展开。此检查按文档模拟这些文件所用的 YAML 操作符，并交给同版内核加载；不执行 OpenClash 的 General 设置和 Shell/Ruby 段，实际部署仍需核实插件最终输出。
+还会将 DNS-fullauto、退役 TikTok 兼容文件、clash-fullauto、WiFi Calling 与两个保护模块合并到生成配置，载入独立的 Nameserver-Policy 文件，检查规则出口、路由及 DNS 中的规则源引用、同名组与真实候选展开。此检查模拟这些文件所用的 YAML 操作符；不执行 OpenClash 的 General 设置和 Shell/Ruby 段。故障修复时已另行对比路由器实际 Ruby 合并器的输出。
 
-`run-checks.py` 会启动并停止隔离测试内核，安全测试还会重启这个测试实例。当前会话禁止重启核心，禁止自动执行该完整命令。只做文件检查可用 `python tools/overwrite-check.py --static-only`：复用已下载且摘要匹配的规则缓存，检查合并、引用、循环及候选数量，不运行内核；该结果不能替代完整运行验证。旧 YouTube 模块移除后的最后一轮属于此静态范围。
+`run-checks.py` 会启动并停止隔离测试内核，安全测试还会重启这个测试实例。当前会话禁止重启核心，禁止自动执行该完整命令。`python tools/overwrite-check.py --static-only` 复用摘要匹配的缓存，检查合并、引用、循环及候选数量，不运行内核；`python tools/overwrite-check.py --parse-only` 另外调用同版内核的 `-t`，解析后退出，不启动监听或运行测试实例。两者都不能替代完整运行验证。本次 DNS 与模块修复已通过 `--parse-only`，完整回归仍未重跑。
 
 业务解锁另验：204 只验证连通性与延迟。Netflix 首次使用、换机场或异常时实际播放验收；AI 还需真实业务验证和用户最终候选名单。第一版 AI 只限定美/日/新加坡，包含带日本 FLAG 的自建候选，尚不能称为已经业务验证的稳定池。
 

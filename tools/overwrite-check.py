@@ -19,7 +19,7 @@ import urllib.request
 import yaml
 
 REPO=pathlib.Path(__file__).resolve().parents[1]
-MODULES=['Tiktok-selector','clash-fullauto','WiFi_Calling','MetaFullautoSafety','PrivateNet']
+MODULES=['DNS-fullauto','Tiktok-selector','clash-fullauto','WiFi_Calling','MetaFullautoSafety','PrivateNet']
 
 def section(path):
     text=path.read_text(encoding='utf-8')
@@ -100,7 +100,7 @@ def runtime(work,core):
     (work/'module-runtime.safe.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps({'phase':'module-runtime-passed','groups':report['groups'],'rule_providers':len(providers),'core_stopped':True},ensure_ascii=False),flush=True)
 
-def main(static_only=False):
+def main(static_only=False,parse_only=False):
     spec=importlib.util.spec_from_file_location('local_converter_check',REPO/'tools'/'check-local.py')
     helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
     from policy import prepare
@@ -119,9 +119,9 @@ def main(static_only=False):
         patch=section(REPO/'overwrite'/name)
         if name not in ('PrivateNet','MetaFullautoSafety'):added_rules+=len(patch.get('+rules',[]))
         merge(data,patch)
-    # The TikTok module keeps its existing post-merge position instruction.
-    social=next(g for g in data['proxy-groups'] if g['name']=='🌐 社交媒体')
-    data['proxy-groups'].remove(social);data['proxy-groups'].insert(6,social)
+    # OpenClash loads this separate policy even with clash-fullauto disabled.
+    dns_policy=yaml.safe_load((REPO/'custom'/'openclash_custom_domain_dns_policy.list').read_text(encoding='utf-8'))
+    data.setdefault('dns',{}).setdefault('nameserver-policy',{}).update(dns_policy)
     http_providers={name:p for name,p in data['rule-providers'].items() if p.get('type')=='http'}
     assert all(p['interval']==172800 for p in http_providers.values()),'Legacy provider interval is not 48h'
     if static_only:
@@ -148,8 +148,14 @@ def main(static_only=False):
         if parts[0]=='RULE-SET':assert parts[1] in data['rule-providers'],('Missing rule provider',parts[1])
     path=work/('module-static.yaml' if static_only else 'module-native.yaml');path.write_text(yaml.safe_dump(data,allow_unicode=True,sort_keys=False),encoding='utf-8')
     if static_only:
-        report={'passed':True,'template_sha256':template_digest,'module_order':MODULES,'retained_legacy_rules':added_rules,'groups':len(data['proxy-groups']),'rule_providers':len(data['rule-providers']),'merged_rules':len(data['rules']),'source_cache_sha256_verified':True,'policy':policy_report,'core_started':False,'native_config_tested':False,'runtime_tested':False}
-        (work/'module-static.safe.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+        if parse_only:
+            command=['wsl.exe','-d',helper.DISTRO,'--exec',helper.CORE,'-t','-d',helper.wslpath(home),'-f',helper.wslpath(path)]
+            result=subprocess.run(command,capture_output=True,timeout=90)
+            output=(result.stdout+result.stderr).decode('utf-8','replace')
+            (work/'module-parse.log').write_text(output,encoding='utf-8')
+            if result.returncode:raise RuntimeError(output[-2500:])
+        report={'passed':True,'template_sha256':template_digest,'module_order':MODULES,'retained_legacy_rules':added_rules,'groups':len(data['proxy-groups']),'rule_providers':len(data['rule-providers']),'merged_rules':len(data['rules']),'source_cache_sha256_verified':True,'dns_policy_included':True,'dns_ruleset_references_checked':True,'policy':policy_report,'core_started':False,'native_config_tested':parse_only,'runtime_tested':False}
+        (work/('module-parse.safe.json' if parse_only else 'module-static.safe.json')).write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
         print(json.dumps(report,ensure_ascii=False,indent=2));return
     command=['wsl.exe','-d',helper.DISTRO,'--exec',helper.CORE,'-t','-d',helper.wslpath(home),'-f',helper.wslpath(path)]
     result=subprocess.run(command,capture_output=True,timeout=90)
@@ -163,5 +169,6 @@ def main(static_only=False):
 if __name__=='__main__':
     if len(sys.argv)==3:runtime(pathlib.Path(sys.argv[1]),sys.argv[2])
     elif sys.argv[1:]==['--static-only']:main(static_only=True)
+    elif sys.argv[1:]==['--parse-only']:main(static_only=True,parse_only=True)
     elif len(sys.argv)==1:main()
-    else:raise SystemExit('Use no arguments for native checks, or --static-only to avoid starting a core')
+    else:raise SystemExit('Use --static-only or --parse-only to avoid starting a core; no arguments runs full checks')
