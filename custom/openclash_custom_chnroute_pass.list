@@ -1,0 +1,13 @@
+# 文件作用：列出 IPv4 绕过大陆规则中的例外域名。
+#baidu.com
+#114.114.114.114
+##解决绕过大陆后谷歌商店无法更新
+services.googleapis.cn
+googleapis.cn
+xn--ngstr-lra8j.com
+##解决openwrt.org源无法更新
+openwrt.org
+*.rc.sunlogin.net
+xunlei.*
+*.wmpvp.com
+client.wns.windows.com
