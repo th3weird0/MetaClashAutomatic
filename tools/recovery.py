@@ -37,11 +37,12 @@ def save(label,keep):
     shutil.copytree(REPO/'tools',dest/'tools',ignore=shutil.ignore_patterns('__pycache__'))
     shutil.copytree(REPO/'overwrite',dest/'overwrite')
     shutil.copytree(LOCAL/'validation'/'runtime-data',dest/'runtime-data',ignore=shutil.ignore_patterns('cache.db','.cache.db','behavior-nodes.yaml'))
+    shutil.copytree(LOCAL/'validation'/'module-data',dest/'module-data',ignore=shutil.ignore_patterns('cache.db','.cache.db','behavior-nodes.yaml'))
     (dest/'versions').mkdir();shutil.copy2(settings['core'],dest/'versions'/'clash_meta')
     converter=pathlib.Path(settings['converter']);bin_dir=dest/'versions'/'subconverter';bin_dir.mkdir()
     for p in converter.parent.iterdir():
         if p.is_file() and p.suffix.lower() in ('.exe','.dll'):shutil.copy2(p,bin_dir/p.name)
-    for name in ['converted-native-test.yaml','conversion-verification.safe.json','native-behavior.safe.json','safety-tests.safe.json','all-checks.safe.json','provider-downloads.safe.json']:
+    for name in ['converted-native-test.yaml','module-native.yaml','conversion-verification.safe.json','native-behavior.safe.json','safety-tests.safe.json','all-checks.safe.json','provider-downloads.safe.json','module-verification.safe.json','module-runtime.safe.json']:
         shutil.copy2(LOCAL/'validation'/name,dest/name)
     files={p.relative_to(dest).as_posix():sha(p) for p in dest.rglob('*') if p.is_file()}
     manifest={'label':label,'validated':True,'template_sha256':evidence['template_sha256'],'tool_versions':evidence['tool_versions'],'files':files,'contains_real_subscriptions':False,'publish_as_ruleset':False}

@@ -6,12 +6,12 @@
 # ==========================================================
 +rule-providers:
 
-  # YouTube: upstream blackmatrix7 classical YAML, refreshed every 24 hours.
+  # YouTube: upstream blackmatrix7 classical YAML, refreshed every 48 hours.
   YouTube:
     type: http
     behavior: classical
     format: yaml
-    interval: 86400
+    interval: 172800
     path: ./rule_provider/YouTube-blackmatrix7.yaml
     url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/YouTube/YouTube.yaml
   # AI / Claude / Gemini / Apple Intelligence
@@ -48,7 +48,7 @@
     format: yaml
     path: ./rule_provider/ai_suite.yaml
     url: https://github.com/dler-io/Rules/raw/refs/heads/main/Clash/Provider/AI%20Suite.yaml
-    interval: 86400
+    interval: 172800
 
   AppleAI_Domain:
     type: http
@@ -56,7 +56,7 @@
     format: yaml
     path: ./rule_provider/AppleAI_Domain.yaml
     url: https://raw.githubusercontent.com/Accademia/Additional_Rule_For_Clash/refs/heads/main/AppleAI/AppleAI_Domain.yaml
-    interval: 86400
+    interval: 172800
 
   google_gemini:
     type: http
@@ -64,7 +64,24 @@
     format: yaml
     path: ./rule_provider/google_gemini.yaml
     url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Gemini/Gemini.yaml
-    interval: 86400
+    interval: 172800
+
+  # Legacy provider names retained for the existing rules below.
+  GoogleFCM:
+    type: http
+    behavior: domain
+    format: mrs
+    path: ./rule_provider/GoogleFCM.mrs
+    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/googlefcm.mrs
+    interval: 172800
+
+  GoogleCN:
+    type: http
+    behavior: domain
+    format: mrs
+    path: ./rule_provider/GoogleCN.mrs
+    url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/google@cn.mrs
+    interval: 172800
 
   # Google / FCM
   google:
@@ -73,7 +90,7 @@
     format: yaml
     path: ./rule_provider/google.yaml
     url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Google/Google.yaml
-    interval: 86400
+    interval: 172800
 
   google_drive:
     type: http
@@ -81,7 +98,7 @@
     format: yaml
     path: ./rule_provider/google_drive.yaml
     url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GoogleDrive/GoogleDrive.yaml
-    interval: 86400
+    interval: 172800
 
   google_search:
     type: http
@@ -89,7 +106,7 @@
     format: yaml
     path: ./rule_provider/google_search.yaml
     url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GoogleSearch/GoogleSearch.yaml
-    interval: 86400
+    interval: 172800
 
   网易云音乐:
     type: http
@@ -97,7 +114,7 @@
     format: text
     path: ./rule_provider/NeteaseMusic.yaml
     url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/NetEaseMusic/NetEaseMusic.list
-    interval: 86400
+    interval: 172800
 
   xiaohongshu:
     type: http
@@ -105,7 +122,7 @@
     format: text
     path: ./rule_provider/xiaohongshu.yaml
     url: https://raw.githubusercontent.com/zealler9560/my-clash-rules/refs/heads/main/Xiaohongshu.list
-    interval: 86400
+    interval: 172800
 
   bytedance:
     type: http
@@ -113,7 +130,7 @@
     format: mrs
     path: ./rule_provider/bytedance.mrs
     url: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/bytedance.mrs
-    interval: 86400
+    interval: 172800
 
   download_cdn_cn:
     type: http
@@ -121,7 +138,7 @@
     format: text
     path: ./rule_provider/download_cdn_cn.list
     url: https://raw.githubusercontent.com/Moli-X/Tool/refs/heads/X/Clash/Rules/DownloadCDN_CN.list
-    interval: 86400
+    interval: 172800
 
   wechat:
     type: http
@@ -129,7 +146,7 @@
     format: text
     path: ./rule_provider/wechat.list
     url: https://raw.githubusercontent.com/Moli-X/Tool/refs/heads/X/Clash/Rules/WeChat.list
-    interval: 86400
+    interval: 172800
 
   china_domain:
     type: http
@@ -137,7 +154,7 @@
     format: text
     path: ./rule_provider/china_domain.list
     url: https://raw.githubusercontent.com/Moli-X/Tool/refs/heads/X/Clash/Rules/ChinaDomain.list
-    interval: 86400
+    interval: 172800
 
   china_asn:
     type: http
@@ -145,7 +162,7 @@
     format: text
     path: ./rule_provider/china_asn.list
     url: https://raw.githubusercontent.com/Moli-X/Tool/refs/heads/X/Clash/Rules/ChinaASN.list
-    interval: 86400
+    interval: 172800
 
   tencent:
     type: http
@@ -153,7 +170,7 @@
     format: text
     path: ./rule_provider/tencent.list
     url: https://raw.githubusercontent.com/Moli-X/Tool/refs/heads/X/Clash/Rules/Tencent.list
-    interval: 86400
+    interval: 172800
 
 # ==========================================================
 # Rules
@@ -162,8 +179,8 @@
 # ==========================================================
 # Remove source duplicates before inserting the ordered rules below.
 rules-:
-  - RULE-SET,YouTube,📹 油管视频
-  - RULE-SET,GoogleFCM,📢 谷歌FCM
+  - RULE-SET,YouTube,📹 国外媒体
+  - RULE-SET,GoogleFCM,🇬 谷歌服务
   - RULE-SET,GoogleCN,🎯 全球直连
 
 +rules:
@@ -171,46 +188,46 @@ rules-:
   # --------------------------------------------------------
   # 1. AI and productivity
   # --------------------------------------------------------
-  - DOMAIN-SUFFIX,2fa.run,💬 Ai平台
-  - DOMAIN-SUFFIX,ab.chatgpt.com,💬 Ai平台
-  - DOMAIN-SUFFIX,android.chat.openai.com,💬 Ai平台
-  - DOMAIN-SUFFIX,sora.chatgpt.com,💬 Ai平台
-  - DOMAIN-SUFFIX,cdn.openai.com,💬 Ai平台
-  - DOMAIN-SUFFIX,bing.com,💬 Ai平台
-  - DOMAIN-SUFFIX,bing.com.cn,💬 Ai平台
-  - DOMAIN-SUFFIX,cn.bing.com,💬 Ai平台
-  - DOMAIN-SUFFIX,www.bing.com,💬 Ai平台
-  - DOMAIN-SUFFIX,edgeservices.bing.com,💬 Ai平台
-  - DOMAIN-SUFFIX,bat.bing.com,💬 Ai平台
-  - DOMAIN-SUFFIX,c.bing.com,💬 Ai平台
+  - DOMAIN-SUFFIX,2fa.run,🤖Ai服务
+  - DOMAIN-SUFFIX,ab.chatgpt.com,🤖Ai服务
+  - DOMAIN-SUFFIX,android.chat.openai.com,🤖Ai服务
+  - DOMAIN-SUFFIX,sora.chatgpt.com,🤖Ai服务
+  - DOMAIN-SUFFIX,cdn.openai.com,🤖Ai服务
+  - DOMAIN-SUFFIX,bing.com,🤖Ai服务
+  - DOMAIN-SUFFIX,bing.com.cn,🤖Ai服务
+  - DOMAIN-SUFFIX,cn.bing.com,🤖Ai服务
+  - DOMAIN-SUFFIX,www.bing.com,🤖Ai服务
+  - DOMAIN-SUFFIX,edgeservices.bing.com,🤖Ai服务
+  - DOMAIN-SUFFIX,bat.bing.com,🤖Ai服务
+  - DOMAIN-SUFFIX,c.bing.com,🤖Ai服务
   - DOMAIN-SUFFIX,models.topazlabs.com,DIRECT
   - DOMAIN-SUFFIX,search.lmstudio.ai,DIRECT
-  - DOMAIN-SUFFIX,*.upstash.io,🚀 节点选择
+  - DOMAIN-SUFFIX,*.upstash.io,🚀 手动选择
 
   # --------------------------------------------------------
   # 2. Apple ecosystem and Apple Intelligence
   # --------------------------------------------------------
-  - DOMAIN-SUFFIX,guzzoni.apple.com,💬 Ai平台
-  - DOMAIN-SUFFIX,*.smoot.apple.com,💬 Ai平台
-  - DOMAIN-SUFFIX,apple-relay.apple.com,💬 Ai平台
-  - DOMAIN-SUFFIX,apple-relay.cloudflare.com,💬 Ai平台
-  - DOMAIN-SUFFIX,apple-relay.fastly-edge.com,💬 Ai平台
-  - DOMAIN-KEYWORD,apple-relay,💬 Ai平台
-  - DOMAIN-SUFFIX,cp4.cloudflare.com,💬 Ai平台
-  - DOMAIN-SUFFIX,*.itunes.apple.com.w.cdngslb.com,🍎 苹果服务
-  - IP-CIDR,17.248.152.145/24,💬 Ai平台,no-resolve
-  - DOMAIN-SUFFIX,behance.net,💬 Ai平台
+  - DOMAIN-SUFFIX,guzzoni.apple.com,🤖Ai服务
+  - DOMAIN-SUFFIX,*.smoot.apple.com,🤖Ai服务
+  - DOMAIN-SUFFIX,apple-relay.apple.com,🤖Ai服务
+  - DOMAIN-SUFFIX,apple-relay.cloudflare.com,🤖Ai服务
+  - DOMAIN-SUFFIX,apple-relay.fastly-edge.com,🤖Ai服务
+  - DOMAIN-KEYWORD,apple-relay,🤖Ai服务
+  - DOMAIN-SUFFIX,cp4.cloudflare.com,🤖Ai服务
+  - DOMAIN-SUFFIX,*.itunes.apple.com.w.cdngslb.com,📦 国内下载更新CDN
+  - IP-CIDR,17.248.152.145/24,🤖Ai服务,no-resolve
+  - DOMAIN-SUFFIX,behance.net,🤖Ai服务
 
   # --------------------------------------------------------
   # 3. Steam, games, and download CDNs
   # --------------------------------------------------------
-  - DOMAIN-SUFFIX,store.steampowered.com,🚀 节点选择
-  - DOMAIN-SUFFIX,steamcommunity.com,🚀 节点选择
-  - DOMAIN-SUFFIX,steam-chat.com,🚀 节点选择
-  - DOMAIN-SUFFIX,steamdb.info,🚀 节点选择
-  - DOMAIN-SUFFIX,steamusercontent.com,🚀 节点选择
-  - DOMAIN-SUFFIX,*.cm.steampowered.com,🚀 节点选择
-  - DOMAIN-KEYWORD,wmsxwd,🚀 节点选择
+  - DOMAIN-SUFFIX,store.steampowered.com,🚀 手动选择
+  - DOMAIN-SUFFIX,steamcommunity.com,🚀 手动选择
+  - DOMAIN-SUFFIX,steam-chat.com,🚀 手动选择
+  - DOMAIN-SUFFIX,steamdb.info,🚀 手动选择
+  - DOMAIN-SUFFIX,steamusercontent.com,🚀 手动选择
+  - DOMAIN-SUFFIX,*.cm.steampowered.com,🚀 手动选择
+  - DOMAIN-KEYWORD,wmsxwd,🚀 手动选择
 
   - DOMAIN-SUFFIX,xz.sycontroller.com,DIRECT
   - DOMAIN-SUFFIX,gstore.val.smogfly.com,DIRECT
@@ -251,13 +268,13 @@ rules-:
   # 4. Google and FCM
   # --------------------------------------------------------
   # YouTube first, then specific Google services, Google fallback last.
-  - RULE-SET,YouTube,📹 油管视频
-  - RULE-SET,GoogleFCM,📢 谷歌FCM
+  - RULE-SET,YouTube,📹 国外媒体
+  - RULE-SET,GoogleFCM,🇬 谷歌服务
   - RULE-SET,GoogleCN,🎯 全球直连
-  - RULE-SET,google_gemini,💬 Ai平台
-  - RULE-SET,google_drive,📢 谷歌FCM
-  - RULE-SET,google_search,📢 谷歌FCM
-  - RULE-SET,google,📢 谷歌FCM
+  - RULE-SET,google_gemini,🤖Ai服务
+  - RULE-SET,google_drive,🇬 谷歌服务
+  - RULE-SET,google_search,🇬 谷歌服务
+  - RULE-SET,google,🇬 谷歌服务
 
   # --------------------------------------------------------
   # 5. Domestic direct traffic
@@ -290,9 +307,9 @@ rules-:
   # --------------------------------------------------------
   - DOMAIN-SUFFIX,makerworld.com,🇭🇰 香港节点
   - DOMAIN-SUFFIX,polymarket.com,🇭🇰 香港节点
-  - DOMAIN-SUFFIX,partners.hikvision.com,🚀 节点选择
-  - DOMAIN-KEYWORD,nhentai,🚀 节点选择
-  - DOMAIN-SUFFIX,*.wns.windows.com,🚀 节点选择
+  - DOMAIN-SUFFIX,partners.hikvision.com,🚀 手动选择
+  - DOMAIN-KEYWORD,nhentai,🚀 手动选择
+  - DOMAIN-SUFFIX,*.wns.windows.com,🚀 手动选择
 
   # --------------------------------------------------------
   # 7. Developer, system, and network direct traffic
@@ -310,9 +327,9 @@ rules-:
   # --------------------------------------------------------
   # 8. Rule providers
   # --------------------------------------------------------
-  - RULE-SET,claude,💬 Ai平台
-  - RULE-SET,ai_suite,💬 Ai平台
-  - RULE-SET,AppleAI_Domain,💬 Ai平台
+  - RULE-SET,claude,🤖Ai服务
+  - RULE-SET,ai_suite,🤖Ai服务
+  - RULE-SET,AppleAI_Domain,🤖Ai服务
 
 
   - RULE-SET,网易云音乐,DIRECT

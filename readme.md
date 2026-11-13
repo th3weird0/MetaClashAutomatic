@@ -23,15 +23,18 @@
 | [DNS-fullauto](overwrite/DNS-fullauto) | 集中管理 Mihomo DNS 基础参数，保留 LuCI 配置的 Nameserver-Policy。 | 已登记启用 | -1 |
 | [Google_Play](overwrite/Google_Play) | 为 Google Play 下载相关域名指定境外 DNS，避免解析到不适用的国内 CDN。 | 仅保留文件，未登记启用 | — |
 | [Tailscale](overwrite/Tailscale) | 将 ts.net 域名交给 Tailscale MagicDNS 解析。 | 仅保留文件，未登记启用 | — |
-| [Tiktok-selector](overwrite/Tiktok-selector) | 添加 TikTok 手动策略组与分流规则，并固定策略组显示顺序。 | 已登记启用 | 6 |
+| [Tiktok-selector](overwrite/Tiktok-selector) | 保留 TikTok 规则并接入已有社交媒体组，保留显示顺序处理。 | 已登记启用 | 6 |
 | [WiFi_Calling](overwrite/WiFi_Calling) | 为 WiFi Calling 的 ePDG、IKE 与 NAT-T 流量添加 UDP 代理规则。 | 仅保留文件，未登记启用 | — |
-| [Youtube-autofallback](overwrite/Youtube-autofallback) | 为 YouTube 添加美国节点故障切换组，并挂接到视频策略组。 | 已登记启用 | 5 |
 | [clash-fullauto](overwrite/clash-fullauto) | 补充规则源与分流规则，统一 AI、视频、下载及国内直连策略。 | 已登记启用 | 4 |
 | [default](overwrite/default) | 保留 OpenClash 覆写参数与用法示例，供创建模块时参考。 | 仅保留文件，未登记启用 | — |
 | [PrivateNet](overwrite/PrivateNet) | 将 private 域名与上游 28 个保留网段固定 DIRECT，优先于可切换分组。 | 新增，未部署 | 最后应用 |
 | [MetaFullautoSafety](overwrite/MetaFullautoSafety) | 自动组与选择器候选为空时明确 REJECT，避免回退直连。 | 新增，未部署 | 规则合并后 |
 
 已登记的上述模块均匹配 `超级自动挡.yaml`。顺序数字越大越先处理。`default` 含有效的 `[General]` 示例参数，不能把它当作当前运行设置直接启用。
+
+旧模块已在本地按新模板名称对齐，保留全部旧分流规则与规则源；表中登记状态仅指采集时的路由器，尚未部署修改后的文件。TikTok 改为更新已有社交媒体组，避免同名组；原先依赖底层配置的 GoogleFCM、GoogleCN 补齐现成来源引用。WiFi Calling 的出口固定为手动选择，需选择支持 UDP 的节点。按后续决定移除旧 `Youtube-autofallback` 模块，其美国 fallback 不加入新模板；国外媒体复用地区 url-test。路由器上的旧模块登记尚未删除。
+
+启用旧模块仍会覆盖新 INI 的部分分流：旧 Steam 非下载规则指向手动选择，旧 Google provider 会覆盖同名来源。按用户选择保留这些规则行为。`PrivateNet` 最后应用以固定私网直连；空组保护在所有组添加完毕后应用。移除 YouTube 模块前的合并配置通过同版内核；移除后只做静态合并、引用和候选检查，未重新运行内核，也未在路由器执行 General、Shell 或 Ruby 段。
 
 ## custom_scripts 与辅助配置
 

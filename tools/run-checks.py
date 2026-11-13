@@ -26,14 +26,18 @@ def main():
     output=LOCAL/'validation'/'all-checks.safe.json';output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(json.dumps(report,indent=2),encoding='utf-8')
     run([sys.executable,str(REPO/'tools'/'check-local.py')])
+    run([sys.executable,str(REPO/'tools'/'overwrite-check.py')])
     for filename in ['runtime-tests.py','test-safety.py']:
         run(['wsl.exe','-d',settings.get('wsl_distro','Ubuntu-24.04'),'--exec','/usr/bin/python3','-u',wslpath(REPO/'tools'/filename),wslpath(LOCAL),settings['core_wsl']])
     run([sys.executable,str(REPO/'tools'/'privacy.py'),'--history'])
     behavior=json.loads((LOCAL/'validation'/'native-behavior.safe.json').read_text(encoding='utf-8'))
     safety=json.loads((LOCAL/'validation'/'safety-tests.safe.json').read_text(encoding='utf-8'))
+    modules=json.loads((LOCAL/'validation'/'module-verification.safe.json').read_text(encoding='utf-8'))
+    module_runtime=json.loads((LOCAL/'validation'/'module-runtime.safe.json').read_text(encoding='utf-8'))
     assert behavior['passed'] and behavior['core_stopped'] and safety['passed']
+    assert modules['passed'] and module_runtime['passed'] and module_runtime['core_stopped']
     assert report['template_sha256']==digest(REPO/'MetaFullauto_Full.ini')==safety['template_sha256']
-    report.update({'passed':True,'routing_cases':len(behavior['routing']),'seconds':round(time.time()-start,1),'production_changes':False,'business_verification_pending':True})
+    report.update({'passed':True,'routing_cases':len(behavior['routing']),'legacy_rules_retained':modules['legacy_prepend_rules'],'module_composition_passed':True,'seconds':round(time.time()-start,1),'production_changes':False,'business_verification_pending':True})
     report['source_hashes']={p.relative_to(REPO).as_posix():digest(p) for folder in ['tools','overwrite'] for p in (REPO/folder).iterdir() if p.is_file()}
     output.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps(report,ensure_ascii=False,indent=2))
