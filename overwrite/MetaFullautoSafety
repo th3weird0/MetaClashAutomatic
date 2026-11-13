@@ -1,0 +1,8 @@
+# 文件作用：为自动策略组设置空组拒绝连接，防止候选消失后回退直连。
+# 部署前仍须运行 tools/policy.py 检查候选与旧选择；本模块不替代零候选拒绝替换。
+[YAML]
+proxy-groups*:
+  where:
+    type: /^(url-test|fallback|load-balance|select)$/
+  set:
+    empty-fallback: REJECT

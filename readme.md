@@ -1,5 +1,17 @@
 私用Clash覆写模块和配置
 
+## 当前订阅模板
+
+- [MetaFullauto_Full.ini](MetaFullauto_Full.ini)：个人 Mihomo 订阅转换模板，未识别流量默认进入手动代理，直连仍可主动选择。
+- [Aethersailor 规则 重度分流版.ini](Aethersailor%20规则%20重度分流版.ini)：上游原文，保留用于对照。
+- [本地检查与恢复](tools/README.md)：真实转换、关键分流、空组拒绝、保存选择迁移、隐私审查及最近三份本地快照。
+
+自动维护的远程规则集统一每 48 小时更新。AI 稳定出口首版包含美/日/新加坡候选，尚待实际业务验证与精简；Netflix 名称尾缀只是候选筛选，204 不代表播放解锁。
+
+仓库采用编辑、验证、审查后本地提交，远程推送单独决定。修改文件不代表已在路由器应用，也不会自动重启核心。
+
+## 初始归档来源
+
 采集日期：2026-11-13；来源为本机路由器当前的 OpenClash 0.48.002 文件。
 
 每个文件内都附有简短的“文件作用”注释。目录名与 `/etc/openclash/` 下的来源目录对应。
@@ -16,6 +28,8 @@
 | [Youtube-autofallback](overwrite/Youtube-autofallback) | 为 YouTube 添加美国节点故障切换组，并挂接到视频策略组。 | 已登记启用 | 5 |
 | [clash-fullauto](overwrite/clash-fullauto) | 补充规则源与分流规则，统一 AI、视频、下载及国内直连策略。 | 已登记启用 | 4 |
 | [default](overwrite/default) | 保留 OpenClash 覆写参数与用法示例，供创建模块时参考。 | 仅保留文件，未登记启用 | — |
+| [PrivateNet](overwrite/PrivateNet) | 将 private 域名与上游 28 个保留网段固定 DIRECT，优先于可切换分组。 | 新增，未部署 | 最后应用 |
+| [MetaFullautoSafety](overwrite/MetaFullautoSafety) | 自动组与选择器候选为空时明确 REJECT，避免回退直连。 | 新增，未部署 | 规则合并后 |
 
 已登记的上述模块均匹配 `超级自动挡.yaml`。顺序数字越大越先处理。`default` 含有效的 `[General]` 示例参数，不能把它当作当前运行设置直接启用。
 

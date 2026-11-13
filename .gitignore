@@ -1,0 +1,4 @@
+# Local tools, validation caches, private settings and recovery snapshots.
+.local/
+__pycache__/
+*.pyc

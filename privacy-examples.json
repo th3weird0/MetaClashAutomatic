@@ -1,0 +1,9 @@
+{
+  "27a271df85c960b29f24a8a21eaa884b334fc1b5bb84d3ccff19c55a0f9c15eb": "Reviewed upstream examples or generic reserved networks; no actual host mapping.",
+  "b0e38115f2b7ac057e946acf5a09da8397eb1cef917a30aa07130b9eb71f7c6b": "Reviewed upstream examples or generic reserved networks; no actual host mapping.",
+  "eaa5ab4001fedcc13b95f43cb8acc2eaf3b275abb47de67350231768682ccec1": "Reviewed upstream examples or generic reserved networks; no actual host mapping.",
+  "357dc40213dba331fedf85af820fcc3faff86294382b66d39098b231da3b13a6": "Reviewed upstream examples or generic reserved networks; no actual host mapping.",
+  "9377a16de0109d9042425fb1b1ed5083bc210e9f99cdfb34a999f134556a5ea1": "Reviewed upstream examples or generic reserved networks; no actual host mapping.",
+  "e80b5fc0a7f833a2996dcd96b934101d7e272fe8d7e5cacdf7917222f92cdae5": "Reviewed generic Fake-IP examples or upstream private network definitions; no device mapping.",
+  "a1c1e98e0f8369aec92a6d5c3fd39a7ca8ac6a82c4f7434acd90b248c686fb68": "Reviewed generic Fake-IP examples or upstream private network definitions; no device mapping."
+}

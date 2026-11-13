@@ -1,0 +1,37 @@
+# 文件作用：将上游 private 域名与全部保留 IP 网段固定 DIRECT，不进入可切换的国内分组。
+# 用户明确授权静态收录 private 网段；不是独立发布的 RULESET。
+# 来源：https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/private.list
+# 读取日期：2026-11-14；原文 SHA256：3105f74241f0c3fc4e0d3a67ffc33a018a3eb7913725a7219576603b79935c3c
+# 本模块最后应用，确保私网规则处于最前；网段更新须重新读取上游并做本地回归。
+[YAML]
++rules:
+  - GEOSITE,private,DIRECT
+  - GEOIP,private,DIRECT,no-resolve
+  - IP-CIDR,0.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.0.0.0/24,DIRECT,no-resolve
+  - IP-CIDR,192.0.2.0/24,DIRECT,no-resolve
+  - IP-CIDR,192.31.196.0/24,DIRECT,no-resolve
+  - IP-CIDR,192.52.193.0/24,DIRECT,no-resolve
+  - IP-CIDR,192.88.99.0/24,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,198.18.0.0/15,DIRECT,no-resolve
+  - IP-CIDR,198.51.100.0/24,DIRECT,no-resolve
+  - IP-CIDR,203.0.113.0/24,DIRECT,no-resolve
+  - IP-CIDR,224.0.0.0/3,DIRECT,no-resolve
+  - IP-CIDR6,::/127,DIRECT,no-resolve
+  - IP-CIDR6,64:ff9b::/96,DIRECT,no-resolve
+  - IP-CIDR6,64:ff9b:1::/48,DIRECT,no-resolve
+  - IP-CIDR6,100::/64,DIRECT,no-resolve
+  - IP-CIDR6,2001::/23,DIRECT,no-resolve
+  - IP-CIDR6,2001:db8::/32,DIRECT,no-resolve
+  - IP-CIDR6,2620:4f:8000::/48,DIRECT,no-resolve
+  - IP-CIDR6,3fff::/20,DIRECT,no-resolve
+  - IP-CIDR6,5f00::/16,DIRECT,no-resolve
+  - IP-CIDR6,fc00::/7,DIRECT,no-resolve
+  - IP-CIDR6,fe80::/10,DIRECT,no-resolve
+  - IP-CIDR6,ff00::/8,DIRECT,no-resolve

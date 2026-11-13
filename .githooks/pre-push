@@ -1,0 +1,5 @@
+#!/bin/sh
+# Review complete local history before every explicit push; this hook never pushes.
+set -eu
+privacy_python=$(git config --local --get meta.privacyPython || printf '%s' python3)
+exec "$privacy_python" tools/privacy.py --history
