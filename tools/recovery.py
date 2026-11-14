@@ -1,75 +1,152 @@
-"""Keep three verified local bundles; restore into a new directory, never deploy."""
+"""Keep verified local bundles; restore into a new directory, never deploy."""
 import argparse
 import datetime
-import hashlib
 import json
 import pathlib
+import re
 import shutil
+import sys
+import tempfile
 
-REPO=pathlib.Path(__file__).resolve().parents[1]
-LOCAL=REPO/'.local'
+# Running a bundled verifier must not add bytecode to the bundle being checked.
+sys.dont_write_bytecode = True
 
-def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
+from snapshot_support import (
+    FORMAT_VERSION, MARKER, SnapshotError, atomic_json, current_sources_for_evidence,
+    digest_map, exclusive_lock, files_under, relative_file, require, sha, verify_binding,
+)
+
+REPO = pathlib.Path(__file__).resolve().parents[1]
+LOCAL = REPO / '.local'
+BUNDLE_NAME = re.compile(r'\d{8}T\d{12}Z\Z')
+
+
 def verify(folder):
-    folder=pathlib.Path(folder).resolve()
-    manifest=json.loads((folder/'snapshot.json').read_text(encoding='utf-8'))
-    actual={p.relative_to(folder).as_posix() for p in folder.rglob('*') if p.is_file() and p.name!='snapshot.json'}
-    if actual!=set(manifest['files']):raise ValueError('Snapshot has missing or unexpected files')
-    for name,digest in manifest['files'].items():
-        path=(folder/name).resolve()
-        if not path.is_relative_to(folder) or not path.is_file() or sha(path)!=digest:raise ValueError('Snapshot path/hash validation failed')
-    return manifest
+    folder = pathlib.Path(folder).resolve()
+    manifest = json.loads(relative_file(folder, 'snapshot.json').read_text(encoding='utf-8'))
+    require(isinstance(manifest, dict), 'Invalid snapshot manifest')
+    files = digest_map(manifest.get('files'))
+    actual = {name: sha(path) for name, path in files_under(folder, ignore_bytecode=False).items()
+              if name != 'snapshot.json'}
+    require(actual == files, 'Snapshot has missing, unexpected or changed files')
+    binding = verify_binding(folder, manifest, actual)
+    return {**manifest, 'verification': binding}
 
-def save(label,keep):
-    settings=json.loads((LOCAL/'settings.json').read_text(encoding='utf-8'))
-    evidence=json.loads((LOCAL/'validation'/'all-checks.safe.json').read_text(encoding='utf-8'))
-    if not evidence['passed'] or evidence['template_sha256']!=sha(REPO/'MetaFullauto_Full.ini'):raise ValueError('Current template has no matching successful regression')
-    for name,digest in evidence['source_hashes'].items():
-        if sha(REPO/name)!=digest:raise ValueError('Tools/modules changed after validation; rerun checks')
+
+def synthetic_fixtures_only():
     import yaml
-    for name in ['synthetic-nodes.yaml','zero-nodes.yaml']:
-        nodes=yaml.safe_load((LOCAL/'validation'/'runtime-data'/name).read_text(encoding='utf-8'))['proxies']
-        if any(p.get('server')!='127.0.0.1' or any(k in p for k in ('password','uuid','token','secret')) for p in nodes):raise ValueError('Only synthetic loopback fixtures may enter a recovery bundle')
-    parent=LOCAL/'snapshots';parent.mkdir(exist_ok=True)
-    stamp=datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-    dest=parent/stamp;dest.mkdir()
-    for name in ['MetaFullauto_Full.ini','Aethersailor 规则 重度分流版.ini']:shutil.copy2(REPO/name,dest/name)
-    shutil.copytree(REPO/'tools',dest/'tools',ignore=shutil.ignore_patterns('__pycache__'))
-    shutil.copytree(REPO/'overwrite',dest/'overwrite')
-    shutil.copytree(LOCAL/'validation'/'runtime-data',dest/'runtime-data',ignore=shutil.ignore_patterns('cache.db','.cache.db','behavior-nodes.yaml'))
-    shutil.copytree(LOCAL/'validation'/'module-data',dest/'module-data',ignore=shutil.ignore_patterns('cache.db','.cache.db','behavior-nodes.yaml'))
-    (dest/'versions').mkdir();shutil.copy2(settings['core'],dest/'versions'/'clash_meta')
-    converter=pathlib.Path(settings['converter']);bin_dir=dest/'versions'/'subconverter';bin_dir.mkdir()
-    for p in converter.parent.iterdir():
-        if p.is_file() and p.suffix.lower() in ('.exe','.dll'):shutil.copy2(p,bin_dir/p.name)
-    for name in ['converted-native-test.yaml','module-native.yaml','conversion-verification.safe.json','native-behavior.safe.json','safety-tests.safe.json','all-checks.safe.json','provider-downloads.safe.json','module-verification.safe.json','module-runtime.safe.json']:
-        shutil.copy2(LOCAL/'validation'/name,dest/name)
-    files={p.relative_to(dest).as_posix():sha(p) for p in dest.rglob('*') if p.is_file()}
-    manifest={'label':label,'validated':True,'template_sha256':evidence['template_sha256'],'tool_versions':evidence['tool_versions'],'files':files,'contains_real_subscriptions':False,'publish_as_ruleset':False}
-    (dest/'snapshot.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
-    verify(dest)
-    # Only prune snapshot directories whose validated manifest and hashes pass.
-    bundles=sorted(p for p in parent.iterdir() if p.is_dir() and (p/'snapshot.json').is_file())
-    for old in bundles[:-max(1,keep)]:
-        resolved=old.resolve()
-        if not resolved.is_relative_to(parent.resolve()):raise ValueError('Snapshot pruning escaped its directory')
-        verify(old);shutil.rmtree(old)
-    return dest
+    work = LOCAL / 'validation/runtime-data'
+    for name in ('synthetic-nodes.yaml', 'zero-nodes.yaml'):
+        fixture = yaml.safe_load(relative_file(work, name).read_text(encoding='utf-8'))
+        require(isinstance(fixture, dict) and isinstance(fixture.get('proxies'), list),
+                'Invalid synthetic node fixture')
+        require(all(isinstance(node, dict) and node.get('server') == '127.0.0.1' and
+                    not any(key in node for key in ('password', 'uuid', 'token', 'secret'))
+                    for node in fixture['proxies']), 'Only synthetic loopback fixtures may enter a recovery bundle')
+
+
+def remove_generated(folder, parent, pending=False):
+    """Check the exact resolved deletion target before any recursive removal."""
+    folder, parent = pathlib.Path(folder), pathlib.Path(parent).resolve()
+    require(not folder.is_symlink() and folder.resolve().parent == parent, 'Snapshot cleanup escaped its parent')
+    require(folder.name.startswith('.pending-') if pending else BUNDLE_NAME.fullmatch(folder.name),
+            'Refusing to remove a directory not generated by recovery')
+    shutil.rmtree(folder)
+
+
+def prune(parent, keep):
+    bundles = []
+    for folder in sorted(parent.iterdir()):
+        if not folder.is_dir() or folder.is_symlink() or not BUNDLE_NAME.fullmatch(folder.name):
+            continue
+        try:
+            verify(folder)
+        except (ValueError, OSError, KeyError, TypeError):
+            continue  # Preserve questionable/unsupported old data for inspection.
+        bundles.append(folder)
+    for old in bundles[:-max(1, keep)]:
+        verify(old)
+        remove_generated(old, parent)
+
+
+def save(label, keep):
+    # A regression writer and snapshot writer cannot race over the success marker.
+    with exclusive_lock(LOCAL / 'validation.lock'), exclusive_lock(LOCAL / 'recovery.lock'):
+        settings = json.loads((LOCAL / 'settings.json').read_text(encoding='utf-8'))
+        marker_bytes = (LOCAL / 'validation' / MARKER).read_bytes()
+        evidence = json.loads(marker_bytes)
+        sources = current_sources_for_evidence(REPO, settings, evidence)
+        synthetic_fixtures_only()
+        parent = LOCAL / 'snapshots'
+        parent.mkdir(exist_ok=True)
+        stage = pathlib.Path(tempfile.mkdtemp(prefix='.pending-', dir=parent))
+        try:
+            for name, source in sources.items():
+                destination = relative_file(stage, name)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination)
+            # Copy the exact evidence bytes checked above, never a later marker.
+            (stage / MARKER).write_bytes(marker_bytes)
+            files = {name: sha(path) for name, path in files_under(stage, ignore_bytecode=False).items()}
+            manifest = {
+                'format_version': FORMAT_VERSION, 'label': label, 'validated': True,
+                'validation_id': evidence['validation_id'], 'converter_entry': evidence['converter_entry'],
+                'template_sha256': evidence['template_sha256'], 'tool_versions': evidence['tool_versions'],
+                'files': files, 'contains_real_subscriptions': False, 'publish_as_ruleset': False,
+            }
+            atomic_json(stage / 'snapshot.json', manifest)
+            verify(stage)  # Rehash packed bytes against evidence after copying.
+            stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+            destination = parent / stamp
+            require(not destination.exists(), 'Snapshot destination already exists')
+            stage.rename(destination)
+        finally:
+            if stage.exists():
+                remove_generated(stage, parent, pending=True)
+        try:
+            prune(parent, keep)  # No retention changes until publication succeeds.
+        except (ValueError, OSError, KeyError, TypeError):
+            # Publication already succeeded. Do not misreport it as a failed save.
+            print('Snapshot saved; retention cleanup incomplete, older bundles may remain', file=sys.stderr)
+        return destination
+
+
+def restore(snapshot, destination):
+    source = pathlib.Path(snapshot).resolve()
+    verify(source)
+    destination = pathlib.Path(destination).resolve()
+    require(not destination.exists(), 'Restore destination must be new; existing data is preserved')
+    require(not destination.is_relative_to(source), 'Restore destination cannot be inside its source snapshot')
+    shutil.copytree(source, destination)
+    manifest = verify(destination)
+    return {'restored': True, 'deployed': False, 'destination': str(destination), **manifest['verification']}
+
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);sub=p.add_subparsers(dest='command',required=True)
-    s=sub.add_parser('save');s.add_argument('--label',default='verified');s.add_argument('--keep',type=int,default=3)
-    v=sub.add_parser('verify');v.add_argument('snapshot')
-    r=sub.add_parser('restore');r.add_argument('snapshot');r.add_argument('--destination',required=True)
-    args=p.parse_args()
-    if args.command=='save':print(save(args.label,args.keep))
-    elif args.command=='verify':print(json.dumps({'verified':True,'template_sha256':verify(args.snapshot)['template_sha256']}))
-    else:
-        source=pathlib.Path(args.snapshot).resolve();verify(source)
-        destination=pathlib.Path(args.destination).resolve()
-        if destination.exists():raise ValueError('Restore destination must be new; existing data is preserved')
-        if destination.is_relative_to(source):raise ValueError('Restore destination cannot be inside its source snapshot')
-        shutil.copytree(source,destination);verify(destination)
-        print(json.dumps({'restored':True,'deployed':False,'destination':str(destination)},ensure_ascii=False))
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest='command', required=True)
+    saving = commands.add_parser('save')
+    saving.add_argument('--label', default='verified')
+    saving.add_argument('--keep', type=int, default=3)
+    checking = commands.add_parser('verify')
+    checking.add_argument('snapshot')
+    restoring = commands.add_parser('restore')
+    restoring.add_argument('snapshot')
+    restoring.add_argument('--destination', required=True)
+    args = parser.parse_args()
+    try:
+        if args.command == 'save':
+            print(save(args.label, args.keep))
+        elif args.command == 'verify':
+            manifest = verify(args.snapshot)
+            print(json.dumps({'verified': True, 'template_sha256': manifest['template_sha256'], **manifest['verification']}))
+        else:
+            print(json.dumps(restore(args.snapshot, args.destination), ensure_ascii=False))
+    except (ValueError, OSError, KeyError, TypeError) as error:
+        print(json.dumps({'ok': False, 'error': str(error) if isinstance(error, SnapshotError) else 'Snapshot read or format error'}))
+        return 1
+    return 0
 
-if __name__=='__main__':main()
+
+if __name__ == '__main__':
+    sys.exit(main())
