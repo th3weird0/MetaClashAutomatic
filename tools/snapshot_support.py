@@ -68,7 +68,11 @@ def files_under(folder, excludes=(), ignore_bytecode=True):
 
 
 def source_files(repo):
-    return {folder + '/' + name: path for folder in ('tools', 'overwrite')
+    # Older standalone bundles predate the public testing folder.
+    folders = ['tools', 'overwrite']
+    if (Path(repo) / 'tool-for-testing').exists():
+        folders.append('tool-for-testing')
+    return {folder + '/' + name: path for folder in folders
             for name, path in files_under(Path(repo) / folder).items()}
 
 
@@ -179,7 +183,7 @@ def verify_binding(folder, manifest, actual):
                 re.fullmatch(r'[0-9a-f]{32}', evidence['validation_id']) and
                 manifest.get('validation_id') == evidence['validation_id'], 'Validation identifier mismatch')
         require(evidence.get('wsl_core_sha256') == versions['core_sha256'], 'WSL evidence mismatch')
-        require({name: value for name, value in actual.items() if name.startswith(('tools/', 'overwrite/'))}
+        require({name: value for name, value in actual.items() if name.startswith(('tools/', 'overwrite/', 'tool-for-testing/'))}
                 == evidence['source_hashes'], 'Packed source inventory mismatch')
         expected = digest_map(evidence.get('snapshot_inputs'))
         require({name: value for name, value in actual.items() if name != MARKER} == expected,

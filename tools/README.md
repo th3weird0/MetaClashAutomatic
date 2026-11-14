@@ -1,5 +1,7 @@
 # 本地检查、候选保护与恢复
 
+普通用户的首次使用流程见 [根 README](../readme.md)，独立的候选生成、配置检查和日常状态检查见 [tool-for-testing](../tool-for-testing/README.md)。`policy.py` 复用该目录的候选与规则引用检查；新快照同时绑定并打包这份共享依赖。工具离线自检命令为 `python tool-for-testing/test_checks.py`。
+
 本仓库采用：编辑 → 本地检查 → 逐行审查 → 本地 commit → 用户决定何时 push。工具不会自动提交、推送、拉取、合并、重载或部署。
 
 ## 本机一次性设置

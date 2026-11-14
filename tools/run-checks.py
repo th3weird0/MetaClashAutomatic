@@ -81,6 +81,7 @@ def main():
             # These offline tool tests never start a core or write a real success marker.
             for filename in ('test_privacy.py', 'test_recovery.py'):
                 run([sys.executable, str(REPO / 'tools' / filename)])
+            run([sys.executable, str(REPO / 'tool-for-testing/test_checks.py')])
             run([sys.executable, str(REPO / 'tools/check-local.py')])
             run([sys.executable, str(REPO / 'tools/overwrite-check.py')])
             for filename in ('runtime-tests.py', 'test-safety.py'):

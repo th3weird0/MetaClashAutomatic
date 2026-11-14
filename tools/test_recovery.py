@@ -153,6 +153,23 @@ class RecoveryTests(unittest.TestCase):
                 self.assertEqual(self.cli('save').returncode, 1)
                 path.write_bytes(original)
 
+    def test_public_checker_is_bound_to_evidence_and_snapshot(self):
+        folder = self.root / 'tool-for-testing'
+        folder.mkdir()
+        checker = folder / 'metaclash_checks.py'
+        checker.write_text('# synthetic shared checker\n', encoding='utf-8')
+        self.assertEqual(self.cli('save').returncode, 1)
+        session = self.runner.start_validation(self.root, self.fake_wsl_digest)
+        self.evidence = self.runner.finish_validation(self.root, session, self.fake_wsl_digest)
+        snapshot = self.save()
+        self.assertEqual((snapshot / 'tool-for-testing/metaclash_checks.py').read_bytes(), checker.read_bytes())
+        checker.write_text('# changed synthetic shared checker\n', encoding='utf-8')
+        self.assertEqual(self.cli('save').returncode, 1)
+        packed = snapshot / 'tool-for-testing/metaclash_checks.py'
+        packed.write_text('# replacement synthetic shared checker\n', encoding='utf-8')
+        self.rewrite_manifest(snapshot)
+        self.assertEqual(self.cli('verify', snapshot).returncode, 1)
+
     def test_replacement_during_copy_fails_without_publishing_or_pruning(self):
         old = self.save()
         original = self.recovery.shutil.copy2

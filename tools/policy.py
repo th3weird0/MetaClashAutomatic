@@ -5,6 +5,7 @@ not open the output. Runtime state migration is a separate, explicit API action.
 """
 import argparse
 import copy
+import importlib.util
 import json
 import os
 import pathlib
@@ -21,53 +22,14 @@ NF='🎥 Netflix'
 NF_AUTO='🎥 Netflix自动'
 BUILTINS={'DIRECT','REJECT','REJECT-DROP','PASS','COMPATIBLE'}
 
-def load(path):
-    with pathlib.Path(path).open(encoding='utf-8-sig') as f:return yaml.safe_load(f)
-
-def inventory(data,home):
-    nodes={p['name']:p for p in data.get('proxies',[])}
-    providers={}
-    for name,p in data.get('proxy-providers',{}).items():
-        if p.get('type')=='inline':rows=p.get('payload',[])
-        else:
-            path=pathlib.Path(p.get('path',''))
-            if not path.is_absolute():path=pathlib.Path(home)/path
-            if not path.is_file():raise ValueError('Provider cache unavailable; refusing unchecked replacement')
-            rows=load(path).get('proxies',[])
-        providers[name]={n['name'] for n in rows}
-        nodes.update({n['name']:n for n in rows})
-    return nodes,providers
-
-def members(group,nodes,providers):
-    values=set(group.get('proxies',[]))
-    pattern=group.get('filter','.*')
-    for name in group.get('use',[]):
-        if name not in providers:raise ValueError('Missing provider reference')
-        values.update(n for n in providers[name] if re.search(pattern,n))
-    if group.get('include-all') or group.get('include-all-providers'):
-        for names in providers.values():values.update(n for n in names if re.search(pattern,n))
-    if group.get('include-all') or group.get('include-all-proxies'):
-        values.update(n for n in nodes if re.search(pattern,n))
-    excluded=group.get('exclude-filter')
-    if excluded:values={n for n in values if not re.search(excluded,n)}
-    return values
-
-def validate_ruleset_references(data):
-    """DNS policies also resolve named rule providers during core parsing."""
-    providers=set(data.get('rule-providers',{}))
-    rules=list(data.get('rules',[]))
-    for rows in data.get('sub-rules',{}).values():rules.extend(rows)
-    for rule in rules:
-        for ref in re.finditer(r'(?:^|[,(])RULE-SET,([^,]+)',rule):
-            name=ref.group(1)
-            if name not in providers and (ref.start()==0 or name.rstrip(')') not in providers):
-                raise ValueError('Routing rule references an unavailable rule provider')
-    for field in ('nameserver-policy','proxy-server-nameserver-policy'):
-        for key in data.get('dns',{}).get(field,{}):
-            if str(key).startswith('rule-set:'):
-                names=str(key)[len('rule-set:'):].split(',')
-                if any(name not in providers for name in names):
-                    raise ValueError('DNS '+field+' references an unavailable rule provider')
+_spec=importlib.util.spec_from_file_location('metaclash_checks',
+    pathlib.Path(__file__).resolve().parents[1]/'tool-for-testing'/'metaclash_checks.py')
+_checks=importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_checks)
+load=_checks.load
+inventory=_checks.inventory
+members=_checks.members
+validate_ruleset_references=_checks.validate_ruleset_references
 
 def prepare(data,home,first_activation=False):
     result=copy.deepcopy(data)
